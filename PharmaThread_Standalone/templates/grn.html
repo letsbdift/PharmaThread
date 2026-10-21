@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="text-2xl font-bold text-slate-800">Good Receipt Note (GRN)</h2>
+    <p class="text-slate-500">Record inbound inventory purchases.</p>
+</div>
+
+<div class="bg-white rounded border border-slate-200 p-6 shadow-sm">
+    <div id="grnAlert"></div>
+    <form id="grnForm" onsubmit="submitGRN(event)">
+        <div class="grid grid-cols-3 gap-4 mb-6 pb-6 border-b border-slate-200">
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Supplier <span class="text-rose-500">*</span></label>
+                <select id="supplier_id" required class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                    <option value="">Select Supplier</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Invoice Number <span class="text-rose-500">*</span></label>
+                <input type="text" id="invoice_number" required class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Invoice Date <span class="text-rose-500">*</span></label>
+                <input type="date" id="invoice_date" required class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+            </div>
+        </div>
+        
+        <div class="mb-4 flex justify-between items-end">
+            <h3 class="text-lg font-bold text-slate-700">Received Items</h3>
+            <button type="button" onclick="addRow()" class="bg-sky-100 text-sky-700 px-3 py-1.5 rounded font-bold hover:bg-sky-200 transition-colors text-sm flex items-center">
+                <i class="ph ph-plus mr-1"></i> Add Line Item
+            </button>
+        </div>
+        
+        <table class="w-full text-left border-collapse mb-6 text-sm">
+            <thead class="bg-slate-50 border-y border-slate-200 text-slate-600">
+                <tr>
+                    <th class="py-2 px-2 font-semibold w-1/4">Medicine</th>
+                    <th class="py-2 px-2 font-semibold">Batch No.</th>
+                    <th class="py-2 px-2 font-semibold">Expiry Date</th>
+                    <th class="py-2 px-2 font-semibold">Qty (Base)</th>
+                    <th class="py-2 px-2 font-semibold">Pur. Price</th>
+                    <th class="py-2 px-2 font-semibold">MRP/Rate</th>
+                    <th class="py-2 px-2 w-10"></th>
+                </tr>
+            </thead>
+            <tbody id="grnBody">
+                <!-- JS populated -->
+            </tbody>
+        </table>
+        
+        <div class="flex justify-end">
+            <button type="submit" class="bg-emerald-600 text-white px-8 py-2.5 rounded font-bold shadow-sm hover:bg-emerald-700 transition-colors text-lg flex items-center">
+                <i class="ph ph-floppy-disk mr-2"></i> Save GRN
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const medicines = {{ medicines_json|safe }};
+    
+    function createMedicineSelect() {
+        let html = '<select required class="w-full border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-sky-500 grn-med"><option value="">Select...</option>';
+        medicines.forEach(m => {
+            html += `<option value="${m.id}">${m.name}</option>`;
+        });
+        html += '</select>';
+        return html;
+    }
+
+    function addRow() {
+        const tbody = document.getElementById('grnBody');
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-slate-100 grn-row";
+        tr.innerHTML = `
+            <td class="py-2 px-2">${createMedicineSelect()}</td>
+            <td class="py-2 px-2"><input type="text" required class="w-full border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-sky-500 grn-batch"></td>
+            <td class="py-2 px-2"><input type="date" required class="w-full border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-sky-500 grn-expiry"></td>
+            <td class="py-2 px-2"><input type="number" required min="1" class="w-full border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-sky-500 grn-qty"></td>
+            <td class="py-2 px-2"><input type="number" required min="0" step="0.01" class="w-full border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-sky-500 grn-pp"></td>
+            <td class="py-2 px-2"><input type="number" required min="0" step="0.01" class="w-full border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-sky-500 grn-mrp"></td>
+            <td class="py-2 px-2 text-right">
+                <button type="button" onclick="this.closest('tr').remove()" class="text-slate-400 hover:text-rose-500 transition-colors"><i class="ph ph-trash text-lg"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+    
+    // Add first row on load
+    addRow();
+
+    async function submitGRN(e) {
+        e.preventDefault();
+        const submitBtn = document.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="ph ph-spinner animate-spin mr-2"></i> Saving...';
+        
+        const rows = document.querySelectorAll('.grn-row');
+        if(rows.length === 0) {
+            alert("Add at least one item.");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="ph ph-floppy-disk mr-2"></i> Save GRN';
+            return;
+        }
+        
+        let items = [];
+        rows.forEach(r => {
+            items.push({
+                medicine_id: r.querySelector('.grn-med').value,
+                batch_number: r.querySelector('.grn-batch').value,
+                expiry_date: r.querySelector('.grn-expiry').value,
+                quantity: r.querySelector('.grn-qty').value,
+                purchase_price: r.querySelector('.grn-pp').value,
+                mrp: r.querySelector('.grn-mrp').value
+            });
+        });
+        
+        const payload = {
+            supplier_id: document.getElementById('supplier_id').value,
+            invoice_number: document.getElementById('invoice_number').value,
+            invoice_date: document.getElementById('invoice_date').value,
+            items: items
+        };
+        
+        try {
+            const res = await fetch('{% url "api_process_grn" %}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            const alertBox = document.getElementById('grnAlert');
+            if(data.status === 'success') {
+                alertBox.innerHTML = `<div class="mb-4 bg-emerald-100 border border-emerald-300 text-emerald-800 px-4 py-3 rounded"><i class="ph ph-check-circle mr-2"></i> ${data.message}</div>`;
+                document.getElementById('grnForm').reset();
+                document.getElementById('grnBody').innerHTML = '';
+                addRow();
+            } else {
+                alertBox.innerHTML = `<div class="mb-4 bg-rose-100 border border-rose-300 text-rose-800 px-4 py-3 rounded"><i class="ph ph-warning-octagon mr-2"></i> ${data.message}</div>`;
+            }
+        } catch (err) {
+            alert('Failed to connect to server.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="ph ph-floppy-disk mr-2"></i> Save GRN';
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="bg-white rounded-lg shadow border border-slate-200">
+    <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+        <div>
+            <h2 class="text-lg font-bold text-slate-800">Schedule H / H1 Register</h2>
+            <p class="text-xs text-slate-500">Form 21 compliant output</p>
+        </div>
+        <form class="flex items-center space-x-2" method="GET">
+            <input type="date" name="start_date" value="{{ start_date }}" class="text-sm border border-slate-300 rounded px-2 py-1">
+            <span class="text-sm text-slate-500">to</span>
+            <input type="date" name="end_date" value="{{ end_date }}" class="text-sm border border-slate-300 rounded px-2 py-1">
+            <button type="submit" class="bg-sky-600 text-white px-3 py-1 text-sm rounded hover:bg-sky-700">Filter</button>
+            <button type="button" onclick="window.print()" class="bg-slate-800 text-white px-3 py-1 text-sm rounded hover:bg-slate-900 ml-2"><i class="ph ph-printer"></i> Print Register</button>
+        </form>
+    </div>
+
+    <div class="overflow-x-auto p-4">
+        <style>
+            @media print {
+                body * { visibility: hidden; }
+                #registerTable, #registerTable * { visibility: visible; }
+                #registerTable { position: absolute; left: 0; top: 0; width: 100%; }
+                .no-print { display: none !important; }
+            }
+            .reg-table th { padding: 8px; border: 1px solid #ddd; background-color: #f1f5f9; text-align: left; font-size: 11px; text-transform: uppercase; }
+            .reg-table td { padding: 8px; border: 1px solid #ddd; font-size: 12px; }
+        </style>
+        
+        <table id="registerTable" class="w-full border-collapse reg-table">
+            <thead>
+                <tr>
+                    <th>Date of Sale</th>
+                    <th>Patient Name & Address</th>
+                    <th>Prescribing Doctor & Reg. No.</th>
+                    <th>Name of Medicine (Schedule)</th>
+                    <th>Batch No.</th>
+                    <th>Qty Supplied</th>
+                    <th>Pharmacist Signature</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.invoice.date|date:"d-m-Y H:i" }}<br><small class="text-slate-500">Inv: {{ item.invoice.invoice_number }}</small></td>
+                    <td>
+                        <span class="font-bold">{{ item.invoice.customer_name_manual|default:"N/A" }}</span>
+                        {% if item.invoice.patient_age %} ({{ item.invoice.patient_age }}Y) {% endif %}
+                        <br><small>{{ item.invoice.patient_address|default:"-" }}</small>
+                    </td>
+                    <td>
+                        {{ item.invoice.doctor_name|default:"-" }}<br>
+                        <small>Reg: {{ item.invoice.doctor_reg_no|default:"-" }}</small>
+                    </td>
+                    <td>
+                        {{ item.batch.medicine.name }}<br>
+                        <span class="bg-rose-100 text-rose-800 text-[10px] px-1 rounded font-bold">SCH {{ item.batch.medicine.schedule_type }}</span>
+                    </td>
+                    <td>{{ item.batch.batch_number }}</td>
+                    <td>{{ item.quantity }} Pack, {{ item.loose }} Loose<br><small>{{ item.base_units }} units</small></td>
+                    <td></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-slate-500 py-8">No Schedule H/H1 sales found in this date range.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

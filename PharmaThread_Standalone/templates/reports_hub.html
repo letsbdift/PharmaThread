@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Reports & Analytics</h2>
+    <p class="text-slate-500">Access and download your central financial and inventory reports.</p>
+</div>
+
+<div class="grid grid-cols-3 gap-6">
+    
+    <!-- Profit & Loss Card -->
+    <div class="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+        <div class="p-6 flex-1">
+            <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center mb-4">
+                <i class="ph ph-chart-line-up text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Profit & Loss</h3>
+            <p class="text-sm text-slate-500 mb-4">View interactive daily margins, net sales, overheads, and exact batch profitability with a custom date range.</p>
+        </div>
+        <div class="bg-slate-50 border-t border-slate-200 p-4 rounded-b-lg">
+            <a href="{% url 'pnl_report' %}" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-2 px-4 rounded hover:bg-slate-50 transition-colors flex justify-center items-center">
+                View Interactive Report <i class="ph ph-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Sales Report Card -->
+    <div class="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+        <div class="p-6 flex-1">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mb-4">
+                <i class="ph ph-receipt text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Sales Report</h3>
+            <p class="text-sm text-slate-500 mb-4">Download a comprehensive ledger of all POS transactions, including customer names, discounts, and net amounts.</p>
+        </div>
+        <div class="bg-slate-50 border-t border-slate-200 p-4 rounded-b-lg flex gap-2">
+            <a href="{% url 'export_sales' %}" class="flex-1 bg-white border border-slate-300 text-emerald-600 font-bold py-2 px-3 rounded hover:bg-emerald-50 transition-colors flex justify-center items-center text-sm">
+                <i class="ph ph-file-xls mr-2 text-lg"></i> Excel
+            </a>
+            <a href="{% url 'export_sales_pdf' %}" class="flex-1 bg-white border border-slate-300 text-rose-600 font-bold py-2 px-3 rounded hover:bg-rose-50 transition-colors flex justify-center items-center text-sm">
+                <i class="ph ph-file-pdf mr-2 text-lg"></i> PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Inventory / Stock Report Card -->
+    <div class="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+        <div class="p-6 flex-1">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mb-4">
+                <i class="ph ph-packages text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Current Inventory</h3>
+            <p class="text-sm text-slate-500 mb-4">Download your live stock levels across all batches. Formatted in Strips and Tablets for physical auditing.</p>
+        </div>
+        <div class="bg-slate-50 border-t border-slate-200 p-4 rounded-b-lg flex gap-2">
+            <a href="{% url 'export_stock' %}" class="flex-1 bg-white border border-slate-300 text-emerald-600 font-bold py-2 px-3 rounded hover:bg-emerald-50 transition-colors flex justify-center items-center text-sm">
+                <i class="ph ph-file-xls mr-2 text-lg"></i> Excel
+            </a>
+            <a href="{% url 'export_stock_pdf' %}" class="flex-1 bg-white border border-slate-300 text-rose-600 font-bold py-2 px-3 rounded hover:bg-rose-50 transition-colors flex justify-center items-center text-sm">
+                <i class="ph ph-file-pdf mr-2 text-lg"></i> PDF
+            </a>
+        </div>
+    </div>
+    
+    <!-- Schedule H/H1 Register Card -->
+    <div class="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+        <div class="p-6 flex-1">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mb-4">
+                <i class="ph ph-file-text text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Schedule H Register</h3>
+            <p class="text-sm text-slate-500 mb-4">Generate and print legally compliant Form 21 registers containing patient demographics and doctor registration numbers.</p>
+        </div>
+        <div class="bg-slate-50 border-t border-slate-200 p-4 rounded-b-lg flex gap-2">
+            <a href="{% url 'schedule_register' %}" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-2 px-4 rounded hover:bg-slate-50 transition-colors flex justify-center items-center">
+                View Register <i class="ph ph-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt - {{ invoice.invoice_number }}</title>
+    <style>
+        body { font-family: monospace; width: 300px; margin: 0 auto; font-size: 12px; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        .border-bottom { border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px; }
+        .border-top { border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 2px 0; }
+        th.right, td.right { text-align: right; }
+        .btn-print { display: block; width: 100%; padding: 10px; background: #000; color: #fff; text-align: center; margin-top: 20px; cursor: pointer; text-decoration: none; border: none;}
+        @media print { .btn-print { display: none; } body { width: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="text-center border-bottom">
+        <h2 style="margin: 5px 0;">{{ profile.name }}</h2>
+        <p style="margin: 2px 0;">{{ profile.address }}</p>
+        <p style="margin: 2px 0;">Tel: {{ profile.phone }}</p>
+        {% if profile.dl_number_20 %}<p style="margin: 2px 0;"><b>DL 20/21:</b> {{ profile.dl_number_20 }} / {{ profile.dl_number_21 }}</p>{% endif %}
+        {% if profile.gstin %}<p style="margin: 2px 0;"><b>GSTIN:</b> {{ profile.gstin }}</p>{% endif %}
+    </div>
+    
+    <div class="border-bottom">
+        <p style="margin: 2px 0;"><b>Invoice:</b> {{ invoice.invoice_number }}</p>
+        <p style="margin: 2px 0;"><b>Date:</b> {{ invoice.date|date:"d/m/Y H:i" }}</p>
+        <p style="margin: 2px 0;"><b>Patient:</b> {{ invoice.customer_name_manual }} {% if invoice.patient_age %}({{ invoice.patient_age }}Y){% endif %}</p>
+        {% if invoice.patient_address %}<p style="margin: 2px 0;"><b>Address:</b> {{ invoice.patient_address }}</p>{% endif %}
+        {% if invoice.doctor_name %}<p style="margin: 2px 0;"><b>Dr:</b> {{ invoice.doctor_name }} {% if invoice.doctor_reg_no %}(Reg: {{ invoice.doctor_reg_no }}){% endif %}</p>{% endif %}
+    </div>
+    
+    <table>
+        <thead>
+            <tr class="border-bottom">
+                <th>Item / HSN</th>
+                <th>Qty</th>
+                <th class="right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items.all %}
+            <tr>
+                <td>{{ item.batch.medicine.name }}<br><small>HSN: {{ item.hsn_code }} | GST: {{ item.gst_rate|floatformat:0 }}% | Rate: {{ item.rate }}</small></td>
+                <td>{{ item.quantity }}P {{ item.loose }}L</td>
+                <td class="right">{{ item.line_total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="border-top">
+        <table style="width: 100%;">
+            <tr>
+                <td>Subtotal:</td>
+                <td class="right">{{ invoice.subtotal }}</td>
+            </tr>
+            <tr>
+                <td>Discount:</td>
+                <td class="right">-{{ invoice.discount }}</td>
+            </tr>
+            <tr>
+                <td>Round-Off:</td>
+                <td class="right">{{ invoice.round_off }}</td>
+            </tr>
+            <tr class="font-bold" style="font-size: 14px;">
+                <td>NET PAYABLE:</td>
+                <td class="right">{{ invoice.net_amount }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- GST Tax Breakdown -->
+    <div class="border-top" style="margin-top: 5px;">
+        <p style="text-align: center; margin: 2px 0; font-weight: bold; text-decoration: underline;">Tax Summary</p>
+        <table style="width: 100%; font-size: 10px;">
+            <tr>
+                <td>Taxable Val</td>
+                <td class="right">{{ invoice.total_taxable_value }}</td>
+            </tr>
+            {% if invoice.is_interstate %}
+            <tr>
+                <td>IGST</td>
+                <td class="right">{{ invoice.total_igst }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td>CGST</td>
+                <td class="right">{{ invoice.total_cgst }}</td>
+            </tr>
+            <tr>
+                <td>SGST</td>
+                <td class="right">{{ invoice.total_sgst }}</td>
+            </tr>
+            {% endif %}
+            <tr class="font-bold">
+                <td>Total Tax</td>
+                <td class="right">{{ invoice.total_cgst|add:invoice.total_sgst|add:invoice.total_igst }}</td>
+            </tr>
+        </table>
+        <p style="font-size: 9px; text-align: center; color: #555;">(All Item Rates are Inclusive of GST)</p>
+    </div>
+    
+    <div class="text-center border-top" style="margin-top: 10px;">
+        <p style="margin: 5px 0;">Payment Mode: {{ invoice.payment_method }}</p>
+        <p style="margin: 5px 0;">Get well soon!</p>
+    </div>
+    
+    <button class="btn-print" onclick="window.print()">PRINT RECEIPT</button>
+</body>
+</html>

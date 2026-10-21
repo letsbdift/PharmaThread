@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-4 flex justify-between items-center">
+    <h2 class="text-xl font-bold text-slate-800">Business Dashboard</h2>
+    <span class="text-slate-500"><i class="ph ph-calendar-blank"></i> Today</span>
+</div>
+
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+    <div class="bg-white rounded border border-slate-200 p-3 shadow-sm relative overflow-x-auto">
+        <div class="absolute top-0 right-0 p-4 opacity-10"><i class="ph ph-currency-inr text-5xl"></i></div>
+        <h3 class="text-slate-500 font-medium mb-1">Gross Sales</h3>
+        <p class="text-xl font-bold text-slate-800">₹{{ pnl.gross_sales|floatformat:2 }}</p>
+    </div>
+    <div class="bg-white rounded border border-slate-200 p-3 shadow-sm relative overflow-x-auto">
+        <div class="absolute top-0 right-0 p-4 opacity-10"><i class="ph ph-chart-line-up text-5xl"></i></div>
+        <h3 class="text-slate-500 font-medium mb-1">Net Profit</h3>
+        <p class="text-2xl font-bold text-emerald-600">₹{{ pnl.net_profit|floatformat:2 }}</p>
+    </div>
+    <!-- Low Stock -->
+    <div class="bg-white rounded border border-slate-200 p-3 shadow-sm flex items-center cursor-pointer hover:bg-slate-50 transition-colors" onclick="openAlertModal('low_stock')">
+        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+            <i class="ph ph-trend-down text-2xl text-blue-600"></i>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-tight">Low Stock</p>
+            <h3 class="text-xl font-bold text-slate-800">{{ low_stock_count }}</h3>
+        </div>
+    </div>
+    <!-- Expired -->
+    <div class="bg-white rounded border border-slate-200 p-3 shadow-sm flex items-center cursor-pointer hover:bg-slate-50 transition-colors" onclick="openAlertModal('expired')">
+        <div class="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center mr-2">
+            <i class="ph ph-warning-octagon text-xl text-rose-600"></i>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-tight">Expired</p>
+            <h3 class="text-xl font-bold text-slate-800">{{ expired_count }}</h3>
+        </div>
+    </div>
+    
+    <!-- Near Expiry -->
+    <div class="bg-white rounded border border-slate-200 p-3 shadow-sm flex items-center cursor-pointer hover:bg-slate-50 transition-colors" onclick="openAlertModal('near_expiry')">
+        <div class="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center mr-2">
+            <i class="ph ph-clock text-xl text-amber-600"></i>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-tight">Expiring Soon</p>
+            <h3 class="text-xl font-bold text-slate-800">{{ near_expiry_count }}</h3>
+        </div>
+    </div>
+    <!-- Monthly Buyers -->
+    <div class="bg-white rounded border border-slate-200 p-3 shadow-sm flex items-center cursor-pointer hover:bg-slate-50 transition-colors" onclick="openAlertModal('monthly_buyers')">
+        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center mr-2">
+            <i class="ph ph-users text-xl text-indigo-600"></i>
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-tight">Monthly Buyers</p>
+            <h3 class="text-xl font-bold text-slate-800">{{ due_subs_count }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="col-span-7 bg-white rounded border border-slate-200 shadow-sm flex flex-col">
+        <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 font-bold text-slate-700 flex justify-between items-center">
+            <div><i class="ph ph-calculator text-sky-600 mr-1"></i> Profit & Loss Statement</div>
+            <div class="flex space-x-2">
+                <a href="{% url 'export_pnl_excel' %}" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200 transition-colors flex items-center">
+                    <i class="ph ph-file-xls mr-1"></i> Excel
+                </a>
+                <a href="{% url 'export_pnl_pdf' %}" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded hover:bg-rose-200 transition-colors flex items-center">
+                    <i class="ph ph-file-pdf mr-1"></i> PDF
+                </a>
+            </div>
+        </div>
+        <div class="p-0">
+            <table class="w-full text-left border-collapse">
+                <tbody>
+                    <tr class="border-b border-slate-100 hover:bg-slate-50"><td class="py-2 px-4">Gross Revenue</td><td class="py-2 px-4 text-right font-medium">₹{{ pnl.gross_sales|floatformat:2 }}</td></tr>
+                    <tr class="border-b border-slate-100 hover:bg-slate-50"><td class="py-2 px-4 text-slate-500">Less: Discounts</td><td class="py-2 px-4 text-right text-rose-500">-₹{{ pnl.total_discounts|floatformat:2 }}</td></tr>
+                    <tr class="border-b-2 border-slate-200 bg-slate-50"><td class="py-2 px-4 font-bold text-slate-800">Net Sales Revenue</td><td class="py-2 px-4 text-right font-bold text-slate-800">₹{{ pnl.net_sales_revenue|floatformat:2 }}</td></tr>
+                    <tr class="border-b border-slate-100 hover:bg-slate-50"><td class="py-2 px-4 text-slate-500">Less: COGS</td><td class="py-2 px-4 text-right text-rose-500">-₹{{ pnl.total_cogs|floatformat:2 }}</td></tr>
+                    <tr class="border-b border-slate-200"><td class="py-2 px-4 font-bold text-slate-800">Gross Profit</td><td class="py-2 px-4 text-right font-bold text-emerald-600">₹{{ pnl.gross_profit|floatformat:2 }}</td></tr>
+                    <tr class="border-b border-slate-100 hover:bg-slate-50"><td class="py-2 px-4 text-slate-500">Less: Operating Expenses</td><td class="py-2 px-4 text-right text-rose-500">-₹{{ pnl.total_opex|floatformat:2 }}</td></tr>
+                    <tr class="border-b border-slate-100 hover:bg-slate-50"><td class="py-2 px-4 text-slate-500">Less: Expiry Losses</td><td class="py-2 px-4 text-right text-rose-500">-₹{{ pnl.expiry_loss|floatformat:2 }}</td></tr>
+                    <tr class="bg-emerald-50"><td class="py-3 px-4 font-bold text-emerald-800">Net Profit (EBITDA)</td><td class="py-3 px-4 text-right font-bold text-emerald-800 text-lg">₹{{ pnl.net_profit|floatformat:2 }}</td></tr>
+                <tr><td colspan="2" class="bg-slate-100 py-1"></td></tr>
+                <tr class="text-slate-500 font-semibold text-sm bg-slate-50">
+                    <td class="py-2 px-4 uppercase tracking-wider">Collections</td>
+                    <td class="py-2 px-4 text-right"></td>
+                </tr>
+                <tr class="border-b border-slate-100">
+                    <td class="py-2 px-4 pl-8 text-slate-600">Cash</td>
+                    <td class="py-2 px-4 text-right text-emerald-600 font-bold">&#8377;{{ pnl.cash_collection|floatformat:2 }}</td>
+                </tr>
+                <tr class="border-b border-slate-100">
+                    <td class="py-2 px-4 pl-8 text-slate-600">UPI / QR</td>
+                    <td class="py-2 px-4 text-right text-blue-600 font-bold">&#8377;{{ pnl.upi_collection|floatformat:2 }}</td>
+                </tr>
+                <tr class="border-b border-slate-100">
+                    <td class="py-2 px-4 pl-8 text-slate-600">Card</td>
+                    <td class="py-2 px-4 text-right text-purple-600 font-bold">&#8377;{{ pnl.card_collection|floatformat:2 }}</td>
+                </tr>
+                <tr class="border-b border-slate-100 bg-rose-50">
+                    <td class="py-2 px-4 pl-8 text-slate-600">Due / Credit</td>
+                    <td class="py-2 px-4 text-right text-rose-600 font-bold">&#8377;{{ pnl.due_collection|floatformat:2 }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-span-5 flex flex-col gap-6">
+        <div class="bg-white rounded border border-slate-200 shadow-sm flex flex-col">
+            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 font-bold text-slate-700 flex justify-between">
+                <span><i class="ph ph-bell-ringing text-amber-500 mr-1"></i> Action Center</span>
+                
+                <span class="bg-rose-100 text-rose-700 text-xs px-2 py-1 rounded">{{ alerts.expired|length }} Critical</span>
+            </div>
+            <div class="p-4 overflow-y-auto max-h-[300px]">
+                
+
+                {% if alerts.low_stock %}
+                    <div class="mb-4 border-l-4 border-blue-500 bg-blue-50 p-3 rounded-r text-sm">
+                        <h4 class="font-bold text-blue-700 mb-1">Low Stock Alerts</h4>
+                        <ul class="list-disc pl-4 text-blue-600 space-y-1">
+                        {% for a in alerts.low_stock %}
+                            <li><b>{{ a.medicine }}</b> is low ({{ a.stock }} left) {% if a.rack %}<span class='text-xs bg-blue-200 px-1 rounded ml-1'>Rack: {{ a.rack }}</span>{% endif %}</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                {% if alerts.expired %}
+                    <div class="mb-4 border-l-4 border-rose-500 bg-rose-50 p-3 rounded-r text-sm">
+                        <h4 class="font-bold text-rose-700 mb-1">Expired Stock Detected</h4>
+                        <ul class="list-disc pl-4 text-rose-600 space-y-1">
+                        {% for a in alerts.expired %}
+                            <li><b>{{ a.medicine }}</b> ({{ a.batch }}) - {{ a.qty }} units</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                {% if alerts.near_expiry_30 or alerts.near_expiry_60 or alerts.near_expiry_90 or alerts.near_expiry_180 %}
+                    <div class="mb-4 border-l-4 border-amber-500 bg-amber-50 p-3 rounded-r text-sm">
+                        <h4 class="font-bold text-amber-700 mb-1">Expiring within 6 Months</h4>
+                        <ul class="list-disc pl-4 text-amber-600 space-y-1">
+                        {% for a in alerts.near_expiry_30 %}
+                            <li>{{ a.medicine }} ({{ a.batch }}) - {{ a.expiry }} <span class="font-bold text-rose-500 ml-1">Critical</span></li>
+                        {% endfor %}
+                        {% for a in alerts.near_expiry_60 %}
+                            <li>{{ a.medicine }} ({{ a.batch }}) - {{ a.expiry }}</li>
+                        {% endfor %}
+                        {% for a in alerts.near_expiry_90 %}
+                            <li>{{ a.medicine }} ({{ a.batch }}) - {{ a.expiry }}</li>
+                        {% endfor %}
+                        {% for a in alerts.near_expiry_180 %}
+                            <li>{{ a.medicine }} ({{ a.batch }}) - {{ a.expiry }}</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                {% if not alerts.expired and not alerts.near_expiry_30 and not alerts.near_expiry_60 and not alerts.near_expiry_90 and not alerts.near_expiry_180 and not alerts.low_stock %}
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="ph ph-check-circle text-4xl mb-2 text-emerald-400"></i>
+                        <p>No critical alerts pending.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a href="{% url 'db_backup' %}" class="bg-white border border-slate-200 p-4 rounded text-center hover:bg-slate-50 transition-colors text-slate-700 font-bold text-sm shadow-sm">
+                <i class="ph ph-database text-2xl text-sky-600 block mb-2"></i> Database Backup
+            </a>
+            <button onclick="runSystemCleanup()" class="bg-white border border-slate-200 p-4 rounded text-center hover:bg-slate-50 transition-colors text-slate-700 font-bold text-sm shadow-sm">
+                <i class="ph ph-broom text-xl text-emerald-600 block mb-2"></i> System Cleanup
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Itemized Alerts -->
+<div id="alertModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
+            <h3 id="alertModalTitle" class="text-lg font-bold text-slate-800">Alert Details</h3>
+            <button onclick="closeAlertModal()" class="text-slate-400 hover:text-rose-500"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1">
+            <ul id="alertModalList" class="divide-y divide-slate-100">
+                <!-- JS populated -->
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    const expiredItems = {{ expired_items_json|safe }};
+    const nearExpiryItems = {{ near_expiry_items_json|safe }};
+    const lowStockItems = {{ low_stock_items_json|safe }};
+    const dueSubs = {{ due_subs_json|safe }};
+
+    function openAlertModal(type) {
+        const modal = document.getElementById('alertModal');
+        const title = document.getElementById('alertModalTitle');
+        const list = document.getElementById('alertModalList');
+        list.innerHTML = '';
+        
+        let items = [];
+        if (type === 'monthly_buyers') {
+            title.innerHTML = '<i class="ph ph-users text-indigo-600 mr-2"></i> Monthly Buyers Due';
+            if (dueSubs.length === 0) {
+                list.innerHTML = '<li class="text-center py-4 text-slate-400">No monthly buyers due today.</li>';
+            } else {
+                dueSubs.forEach(item => {
+                    list.innerHTML += `
+                        <li class="py-3 flex justify-between">
+                            <span class="font-semibold text-slate-700">${item.customer} (${item.phone})</span>
+                            <span class="font-bold text-slate-500">${item.medicine}</span>
+                        </li>
+                    `;
+                });
+            }
+            modal.classList.remove('hidden');
+            return;
+        } else if (type === 'expired') {
+            title.innerHTML = '<i class="ph ph-warning-octagon text-rose-600 mr-2"></i> Expired Items';
+            items = expiredItems;
+        } else if (type === 'low_stock') {
+            title.innerHTML = '<i class="ph ph-trend-down text-blue-600 mr-2"></i> Low Stock Items';
+            items = lowStockItems;
+        } else {
+            title.innerHTML = '<i class="ph ph-clock text-amber-600 mr-2"></i> Near Expiry Items';
+            items = nearExpiryItems;
+        }
+
+        if (items.length === 0) {
+            list.innerHTML = '<li class="text-center py-4 text-slate-400">No items found.</li>';
+        } else {
+            items.forEach(item => {
+                const stockText = (typeof item.stock === 'string' && item.stock.includes('sheet')) ? item.stock : `${item.stock} units`;
+                list.innerHTML += `
+                    <li class="py-3 flex justify-between">
+                        <span class="font-semibold text-slate-700">${item.name} ${item.rack ? '<span class="ml-2 text-xs bg-slate-200 px-2 py-0.5 rounded text-slate-600">Rack: ' + item.rack + '</span>' : ''}</span>
+                        <span class="font-bold text-slate-500">${stockText}</span>
+                    </li>
+                `;
+            });
+        }
+        
+        modal.classList.remove('hidden');
+    }
+
+    function closeAlertModal() {
+        document.getElementById('alertModal').classList.add('hidden');
+    }
+
+    async function runSystemCleanup() {
+        if (!confirm('Are you sure you want to clear temporary data and cache?')) return;
+        try {
+            const res = await fetch("{% url 'system_cleanup' %}");
+            const data = await res.json();
+            if(data.status === 'success') {
+                alert(data.message);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch(e) {
+            alert('Failed to connect to server.');
+        }
+    }
+</script>
+{% endblock %}

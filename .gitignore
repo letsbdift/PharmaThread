@@ -1,0 +1,56 @@
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# SQLite Database
+db.sqlite3
+*.sqlite3
+
+# Portable embedded Python in standalone builds
+**/python/
+python/
+
+# Build and archive artifacts
+*.zip
+*.tar.gz
+*.rar
+deploy.zip
+
+# Scratch and temporary scripts
+pa_*.py
+api_*.py
+test_*.py
+check_*.py
+fix*.py
+fix*.ps1
+patch_*.py
+seed_dummy*.py
+zip_*.py
+account*.html
+add_*.py
+update_*.py
+find_*.py
+count.py
+build_standalone.py
+create_pwa.py
+inject_pwa_tags.py
+reorder_nav.py
+responsive_pos.py
+recover.py
+real_wsgi.py
+final_wsgi.py
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs & temp files
+*.log
+*.tmp
+extracted.txt

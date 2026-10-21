@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-4 flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-slate-800">Suppliers</h2>
+    <button onclick="openAddSupplierModal()" class="bg-emerald-600 text-white px-4 py-2 rounded font-bold hover:bg-emerald-700 transition-colors flex items-center">
+        <i class="ph ph-plus mr-1"></i> Add Supplier
+    </button>
+</div>
+
+<div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+    <table class="w-full text-left border-collapse">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600">
+            <tr>
+                <th class="py-3 px-4 font-semibold">Supplier Name</th>
+                <th class="py-3 px-4 font-semibold">Contact Person</th>
+                <th class="py-3 px-4 font-semibold">Phone</th>
+                <th class="py-3 px-4 font-semibold">Email</th>
+                <th class="py-3 px-4 font-semibold">Payment Terms</th>
+                <th class="py-3 px-4 font-semibold">Status</th>
+                <th class="py-3 px-4 font-semibold">History</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            {% for s in suppliers %}
+            <tr class="hover:bg-slate-50">
+                <td class="py-3 px-4 font-medium text-slate-800">{{ s.name }}</td>
+                <td class="py-3 px-4 text-slate-600">{{ s.contact_person }}</td>
+                <td class="py-3 px-4 text-slate-600">{{ s.phone }}</td>
+                <td class="py-3 px-4 text-slate-600">{{ s.email }}</td>
+                <td class="py-3 px-4 text-slate-600">{{ s.payment_terms|default:"-" }}</td>
+                <td class="py-3 px-4">
+                    {% if s.is_active %}
+                    <span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold">Active</span>
+                    {% else %}
+                    <span class="bg-slate-100 text-slate-500 px-2 py-1 rounded text-xs font-bold">Inactive</span>
+                    {% endif %}
+                </td>
+                <td class="py-3 px-4">
+                    <span onclick="viewSupplierHistory({{ s.id }}, '{{ s.name|escapejs }}')" class="text-xs text-sky-600 font-semibold cursor-pointer hover:underline">{{ s.purchaseinvoice_set.count }} PO(s)</span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="py-8 text-center text-slate-400">No suppliers found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Supplier Modal -->
+<div id="addSupplierModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-xl w-[500px] flex flex-col">
+        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
+            <h3 class="text-lg font-bold text-slate-800">Add New Supplier</h3>
+            <button onclick="closeAddSupplierModal()" class="text-slate-400 hover:text-rose-500"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <div class="p-6">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Supplier Name <span class="text-rose-500">*</span></label>
+                        <input type="text" name="name" required class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-1">Contact Person</label>
+                            <input type="text" name="contact_person" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-1">Phone <span class="text-rose-500">*</span></label>
+                            <input type="text" name="phone" required class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-1">Email</label>
+                            <input type="email" name="email" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-1">GSTIN</label>
+                            <input type="text" name="gstin" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Address</label>
+                        <textarea name="address" rows="2" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-1">Payment Terms</label>
+                            <input type="text" name="payment_terms" placeholder="e.g. Net 30" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-600 mb-1">Credit Limit</label>
+                            <input type="number" step="0.01" name="credit_limit" placeholder="0.00" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Status</label>
+                        <select name="status" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="bg-emerald-600 text-white px-6 py-2 rounded font-bold hover:bg-emerald-700 transition-colors">
+                        Save Supplier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Supplier History Modal -->
+<div id="supplierHistoryModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-xl w-[600px] flex flex-col max-h-[80vh]">
+        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
+            <h3 class="text-lg font-bold text-slate-800">PO History: <span id="historySupplierName" class="text-sky-600"></span></h3>
+            <button onclick="closeSupplierHistoryModal()" class="text-slate-400 hover:text-rose-500"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm">
+                    <tr>
+                        <th class="py-2 px-3 font-semibold">Invoice #</th>
+                        <th class="py-2 px-3 font-semibold">Date</th>
+                        <th class="py-2 px-3 font-semibold text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody" class="divide-y divide-slate-100 text-sm">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openAddSupplierModal() {
+        document.getElementById('addSupplierModal').classList.remove('hidden');
+    }
+    function closeAddSupplierModal() {
+        document.getElementById('addSupplierModal').classList.add('hidden');
+    }
+    function closeSupplierHistoryModal() {
+        document.getElementById('supplierHistoryModal').classList.add('hidden');
+    }
+    async function viewSupplierHistory(supplierId, supplierName) {
+        document.getElementById('historySupplierName').innerText = supplierName;
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-slate-400">Loading history...</td></tr>';
+        document.getElementById('supplierHistoryModal').classList.remove('hidden');
+        
+        try {
+            const res = await fetch(`/procurement/api/supplier/${supplierId}/history/`);
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                tbody.innerHTML = '';
+                if (data.history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-slate-400">No purchase orders found.</td></tr>';
+                    return;
+                }
+                
+                data.history.forEach(inv => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-2 px-3 font-medium text-slate-800">${inv.invoice_number}</td>
+                            <td class="py-2 px-3 text-slate-600">${inv.date}</td>
+                            <td class="py-2 px-3 text-slate-800 font-bold text-right">₹${inv.amount.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-rose-500">Failed to load history.</td></tr>';
+            }
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-rose-500">Error connecting to server.</td></tr>';
+        }
+    }
+</script>
+{% endblock %}

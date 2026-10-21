@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-4 flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-slate-800">Drug Master</h2>
+    <a href="{% url 'medicine_add' %}" class="bg-emerald-600 text-white px-4 py-2 rounded font-bold hover:bg-emerald-700 transition-colors flex items-center">
+        <i class="ph ph-plus mr-1"></i> Add New Drug
+    </a>
+</div>
+
+<div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+    <table class="w-full text-left border-collapse">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600">
+            <tr>
+                <th class="py-3 px-4 font-semibold">Medicine Name</th>
+                <th class="py-3 px-4 font-semibold">Generic / Category</th>
+                <th class="py-3 px-4 font-semibold text-center">Pack Size</th>
+                <th class="py-3 px-4 font-semibold text-center">Total Stock</th>
+                <th class="py-3 px-4 font-semibold text-right">Avg Selling Rate</th>
+                <th class="py-3 px-4 font-semibold text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            {% for m in medicines %}
+            <tr class="hover:bg-slate-50">
+                <td class="py-3 px-4 font-medium text-slate-800">{{ m.name }}</td>
+                <td class="py-3 px-4 text-slate-500">{{ m.generic_name }} <span class="bg-slate-200 px-2 py-0.5 rounded text-xs ml-2">{{ m.category }}</span></td>
+                <td class="py-3 px-4 text-center text-slate-600">{{ m.units_per_pack }} units</td>
+                <td class="py-3 px-4 text-center font-bold {% if m.total_base_stock <= 0 %}text-rose-500{% else %}text-emerald-600{% endif %}">
+                    {{ m.stock_formatted }}
+                </td>
+                <td class="py-3 px-4 text-right text-slate-600">₹{{ m.avg_rate|floatformat:2|default:"0.00" }}</td>
+                <td class="py-3 px-4 text-right">
+                    <a href="{% url 'medicine_edit' m.id %}" class="text-sky-600 hover:text-sky-800 mr-2" title="Edit">
+                        <i class="ph ph-pencil-simple text-lg"></i>
+                    </a>
+                    <a href="{% url 'medicine_delete' m.id %}" class="text-rose-500 hover:text-rose-700" title="Delete">
+                        <i class="ph ph-trash text-lg"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="py-8 text-center text-slate-400">No medicines found in the database.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Profit & Loss Report</h2>
+        <p class="text-slate-500">Track monthly operational trends and exact batch margins.</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{% url 'export_pnl_excel' %}?start_date={{ start_date }}&end_date={{ end_date }}" class="bg-emerald-600 text-white px-4 py-2 rounded font-bold hover:bg-emerald-700 transition-colors flex items-center shadow-sm">
+            <i class="ph ph-file-xls mr-2"></i> Excel
+        </a>
+        <a href="{% url 'export_pnl_pdf' %}?start_date={{ start_date }}&end_date={{ end_date }}" class="bg-rose-600 text-white px-4 py-2 rounded font-bold hover:bg-rose-700 transition-colors flex items-center shadow-sm">
+            <i class="ph ph-file-pdf mr-2"></i> PDF
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded border border-slate-200 p-4 shadow-sm mb-6 flex justify-between items-center">
+    <form method="GET" class="flex gap-4 items-end">
+        <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">Start Date</label>
+            <input type="date" name="start_date" value="{{ start_date }}" class="border border-slate-300 rounded px-3 py-1.5 focus:outline-none focus:border-sky-500 text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-slate-600 mb-1">End Date</label>
+            <input type="date" name="end_date" value="{{ end_date }}" class="border border-slate-300 rounded px-3 py-1.5 focus:outline-none focus:border-sky-500 text-sm">
+        </div>
+        <button type="submit" class="bg-sky-600 text-white px-4 py-1.5 rounded font-bold hover:bg-sky-700 transition-colors shadow-sm">
+            Apply Filter
+        </button>
+    </form>
+</div>
+
+<div class="grid grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded border border-slate-200 p-4 shadow-sm">
+        <h3 class="text-slate-500 font-medium mb-1">Net Sales Revenue</h3>
+        <p class="text-2xl font-bold text-slate-800">₹{{ total_sales|floatformat:2 }}</p>
+    </div>
+    <div class="bg-white rounded border border-slate-200 p-4 shadow-sm">
+        <h3 class="text-slate-500 font-medium mb-1">Total COGS</h3>
+        <p class="text-2xl font-bold text-rose-600">₹{{ total_cogs|floatformat:2 }}</p>
+    </div>
+    <div class="bg-white rounded border border-slate-200 p-4 shadow-sm">
+        <h3 class="text-slate-500 font-medium mb-1">Gross Profit</h3>
+        <p class="text-2xl font-bold text-sky-600">₹{{ total_gross|floatformat:2 }}</p>
+        <p class="text-xs text-slate-400 mt-1">Margin: {{ total_gross_margin }}</p>
+    </div>
+    <div class="bg-white rounded border border-slate-200 p-4 shadow-sm">
+        <h3 class="text-slate-500 font-medium mb-1">Net Profit</h3>
+        <p class="text-2xl font-bold text-emerald-600">₹{{ total_net|floatformat:2 }}</p>
+        <p class="text-xs text-slate-400 mt-1">Margin: {{ total_net_margin }}</p>
+    </div>
+</div>
+
+<div class="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm">
+                <tr>
+                    <th class="py-3 px-4 font-semibold">Date</th>
+                    <th class="py-3 px-4 font-semibold text-right">Net Sales</th>
+                    <th class="py-3 px-4 font-semibold text-right">COGS</th>
+                    <th class="py-3 px-4 font-semibold text-right">Gross Profit</th>
+                    <th class="py-3 px-4 font-semibold text-center">Gross Margin</th>
+                    <th class="py-3 px-4 font-semibold text-right">Opex</th>
+                    <th class="py-3 px-4 font-semibold text-right">Expiry Loss</th>
+                    <th class="py-3 px-4 font-semibold text-right">Net Profit</th>
+                    <th class="py-3 px-4 font-semibold text-center">Net Margin</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+                {% for row in data %}
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-4 font-medium text-slate-800">{{ row.0 }}</td>
+                    <td class="py-2 px-4 text-right">₹{{ row.1|floatformat:2 }}</td>
+                    <td class="py-2 px-4 text-right text-rose-500">₹{{ row.2|floatformat:2 }}</td>
+                    <td class="py-2 px-4 text-right font-medium text-sky-600">₹{{ row.3|floatformat:2 }}</td>
+                    <td class="py-2 px-4 text-center">{{ row.4 }}</td>
+                    <td class="py-2 px-4 text-right text-rose-400">₹{{ row.5|floatformat:2 }}</td>
+                    <td class="py-2 px-4 text-right text-rose-400">₹{{ row.6|floatformat:2 }}</td>
+                    <td class="py-2 px-4 text-right font-bold text-emerald-600">₹{{ row.7|floatformat:2 }}</td>
+                    <td class="py-2 px-4 text-center">{{ row.8 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="py-8 text-center text-slate-400">No financial data recorded in this period.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-slate-50 border-t-2 border-slate-200 font-bold text-slate-800">
+                <tr>
+                    <td class="py-3 px-4">GRAND TOTAL</td>
+                    <td class="py-3 px-4 text-right">₹{{ total_sales|floatformat:2 }}</td>
+                    <td class="py-3 px-4 text-right text-rose-600">₹{{ total_cogs|floatformat:2 }}</td>
+                    <td class="py-3 px-4 text-right text-sky-600">₹{{ total_gross|floatformat:2 }}</td>
+                    <td class="py-3 px-4 text-center">{{ total_gross_margin }}</td>
+                    <td class="py-3 px-4 text-right text-rose-500">-</td>
+                    <td class="py-3 px-4 text-right text-rose-500">-</td>
+                    <td class="py-3 px-4 text-right text-emerald-600">₹{{ total_net|floatformat:2 }}</td>
+                    <td class="py-3 px-4 text-center">{{ total_net_margin }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

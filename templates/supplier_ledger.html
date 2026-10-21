@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-slate-800">Ledger: {{ supplier.name }}</h1>
+    <div class="flex space-x-2">
+        <button onclick="document.getElementById('paymentModal').classList.remove('hidden')" class="bg-emerald-600 text-white px-4 py-2 rounded font-bold hover:bg-emerald-700 transition-colors flex items-center">
+            <i class="ph ph-money mr-2"></i> Add Payment
+        </button>
+        <button onclick="document.getElementById('returnModal').classList.remove('hidden')" class="bg-rose-600 text-white px-4 py-2 rounded font-bold hover:bg-rose-700 transition-colors flex items-center">
+            <i class="ph ph-arrow-u-up-left mr-2"></i> Create Debit Note
+        </button>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-sky-500">
+        <h5 class="text-sm font-semibold text-slate-500 mb-1">Outstanding Balance</h5>
+        <h3 class="text-3xl font-bold {% if supplier.pending_balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+            &#8377;{{ supplier.pending_balance }}
+        </h3>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 md:col-span-2">
+        <h5 class="text-sm font-semibold text-slate-500 mb-2">Supplier Details</h5>
+        <div class="grid grid-cols-2 gap-4 text-slate-700">
+            <p><strong>Contact:</strong> {{ supplier.contact_person }} | {{ supplier.phone }}</p>
+            <p><strong>Email:</strong> {{ supplier.email }}</p>
+            <p><strong>GSTIN:</strong> {{ supplier.gstin }}</p>
+            <p><strong>Terms:</strong> {{ supplier.payment_terms }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-x-auto">
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h5 class="font-bold text-slate-800 m-0">Transaction History</h5>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm">
+                <tr>
+                    <th class="py-3 px-6 font-semibold">Date</th>
+                    <th class="py-3 px-6 font-semibold">Type</th>
+                    <th class="py-3 px-6 font-semibold">Reference</th>
+                    <th class="py-3 px-6 font-semibold text-right">Debit (Dr)</th>
+                    <th class="py-3 px-6 font-semibold text-right">Credit (Cr)</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+                {% for txn in ledger %}
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-6 text-slate-600">{{ txn.date|date:"Y-m-d" }}</td>
+                    <td class="py-3 px-6">
+                        {% if txn.type == 'PURCHASE' %}<span class="bg-slate-200 text-slate-700 py-1 px-2 rounded text-xs font-bold">Purchase</span>{% endif %}
+                        {% if txn.type == 'PAYMENT' %}<span class="bg-emerald-100 text-emerald-700 py-1 px-2 rounded text-xs font-bold">Payment</span>{% endif %}
+                        {% if txn.type == 'DEBIT NOTE' %}<span class="bg-rose-100 text-rose-700 py-1 px-2 rounded text-xs font-bold">Debit Note</span>{% endif %}
+                    </td>
+                    <td class="py-3 px-6 text-slate-600">{{ txn.ref|default:"-" }}</td>
+                    <td class="py-3 px-6 text-right font-medium text-slate-800">
+                        {% if txn.amount < 0 %}
+                            &#8377;{{ txn.amount|stringformat:"f"|slice:"1:" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="py-3 px-6 text-right font-medium text-slate-800">
+                        {% if txn.amount > 0 %}
+                            &#8377;{{ txn.amount }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-slate-400 py-6">No transactions found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 flex flex-col">
+        <form method="POST" action="{% url 'supplier_payment_add' supplier.id %}">
+            {% csrf_token %}
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
+                <h3 class="text-lg font-bold text-slate-800">Record Payment</h3>
+                <button type="button" onclick="document.getElementById('paymentModal').classList.add('hidden')" class="text-slate-400 hover:text-rose-500"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Date</label>
+                    <input type="date" name="date" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500" required value="{% now 'Y-m-d' %}">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Amount (&#8377;)</label>
+                    <input type="number" step="0.01" name="amount" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Payment Method</label>
+                    <select name="payment_method" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500" required>
+                        <option value="CASH">Cash</option>
+                        <option value="BANK">Bank Transfer</option>
+                        <option value="CHEQUE">Cheque</option>
+                        <option value="UPI">UPI</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Reference No.</label>
+                    <input type="text" name="reference_number" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Remarks</label>
+                    <textarea name="remarks" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end rounded-b-lg">
+                <button type="submit" class="bg-emerald-600 text-white px-6 py-2 rounded font-bold hover:bg-emerald-700 transition-colors">Save Payment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Return Modal -->
+<div id="returnModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 flex flex-col">
+        <form method="POST" action="{% url 'supplier_return_add' supplier.id %}">
+            {% csrf_token %}
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
+                <h3 class="text-lg font-bold text-slate-800">Create Debit Note</h3>
+                <button type="button" onclick="document.getElementById('returnModal').classList.add('hidden')" class="text-slate-400 hover:text-rose-500"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Debit Note Number</label>
+                    <input type="text" name="debit_note_number" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Select Batch</label>
+                    <select name="batch_id" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500" required>
+                        <option value="">-- Select Batch --</option>
+                        {% for b in available_batches %} 
+                            <option value="{{ b.id }}">{{ b.medicine.name }} (Batch: {{ b.batch_number }}) - Qty: {{ b.quantity }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Quantity to Return</label>
+                    <input type="number" name="quantity" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500" required min="1">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Reason</label>
+                    <textarea name="reason" class="w-full border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-sky-500" rows="2" required></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end rounded-b-lg">
+                <button type="submit" class="bg-rose-600 text-white px-6 py-2 rounded font-bold hover:bg-rose-700 transition-colors">Confirm Return</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

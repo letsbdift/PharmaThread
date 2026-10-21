@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-4 flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-slate-800">Drug Master</h2>
+    <div class="flex space-x-2">
+        <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-indigo-600 text-white px-4 py-2 rounded font-bold hover:bg-indigo-700 transition-colors flex items-center text-sm sm:text-base">
+            <i class="ph ph-file-csv mr-1"></i> Bulk Import Drug
+        </button>
+        <a href="{% url 'medicine_add' %}" class="bg-emerald-600 text-white px-4 py-2 rounded font-bold hover:bg-emerald-700 transition-colors flex items-center text-sm sm:text-base">
+            <i class="ph ph-plus mr-1"></i> Add New Drug
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded border border-slate-200 shadow-sm overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600">
+            <tr>
+                <th class="py-3 px-4 font-semibold">Medicine Name</th>
+                <th class="py-3 px-4 font-semibold">Generic / Category</th>
+                <th class="py-3 px-4 font-semibold text-center">Pack Size</th>
+                <th class="py-3 px-4 font-semibold text-center">Total Stock</th>
+                <th class="py-3 px-4 font-semibold text-center">Min Stock</th>
+                <th class="py-3 px-4 font-semibold text-center">Location/Rack</th>
+                <th class="py-3 px-4 font-semibold text-right">Avg Selling Rate</th>
+                <th class="py-3 px-4 font-semibold text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            {% for m in medicines %}
+            <tr class="hover:bg-slate-50">
+                <td class="py-3 px-4 font-medium text-slate-800">{{ m.name }}</td>
+                <td class="py-3 px-4 text-slate-500">{{ m.generic_name }} <span class="bg-slate-200 px-2 py-0.5 rounded text-xs ml-2">{{ m.category }}</span></td>
+                <td class="py-3 px-4 text-center text-slate-600">{{ m.units_per_pack }} units</td>
+                <td class="py-3 px-4 text-center font-bold {% if m.total_base_stock <= 0 %}text-rose-500{% else %}text-emerald-600{% endif %}">
+                    {{ m.stock_formatted }}
+                </td>
+                <td class="py-3 px-4 text-center text-slate-600">{{ m.min_stock_level }}</td>
+                <td class="py-3 px-4 text-center text-slate-600">{{ m.rack_location|default:"-" }}</td>
+                <td class="py-3 px-4 text-right text-slate-600">&#8377;{{ m.avg_rate|floatformat:2|default:"0.00" }}</td>
+                <td class="py-3 px-4 text-right">
+                    <a href="{% url 'medicine_edit' m.id %}" class="text-sky-600 hover:text-sky-800 mr-2" title="Edit">
+                        <i class="ph ph-pencil-simple text-lg"></i>
+                    </a>
+                    <a href="{% url 'medicine_delete' m.id %}" class="text-rose-500 hover:text-rose-700" title="Delete">
+                        <i class="ph ph-trash text-lg"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="py-8 text-center text-slate-400">No medicines found in the database.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Import Modal -->
+<div id="importModal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+        <div class="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
+            <h3 class="font-bold text-lg text-slate-800">Bulk Import Drug</h3>
+            <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="text-slate-400 hover:text-rose-500">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+        </div>
+        <div class="p-4">
+            <div class="mb-4 bg-sky-50 border border-sky-200 p-3 rounded text-sm text-sky-800">
+                <p class="font-semibold mb-1"><i class="ph ph-info mr-1"></i> Format Requirements</p>
+                <p>Ensure your CSV or Excel file matches the required template exactly.</p>
+                <a href="{% url 'download_import_template' %}" class="mt-2 inline-block text-sky-600 hover:text-sky-800 font-semibold underline">
+                    <i class="ph ph-download-simple mr-1"></i> Download Template
+                </a>
+            </div>
+            <form action="{% url 'medicine_bulk_import' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-slate-600 mb-2">Select File (.csv, .xlsx)</label>
+                    <input type="file" name="import_file" accept=".csv" required class="w-full border border-slate-300 p-2 rounded focus:outline-none focus:border-sky-500 text-sm">
+                </div>
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded font-bold hover:bg-indigo-700 transition-colors flex items-center">
+                        <i class="ph ph-upload-simple mr-1"></i> Upload & Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
